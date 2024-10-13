@@ -1,6 +1,6 @@
 ## **What Is This?**
 
-This repository contains an API server implementation using Swagger UI and aimed at replacing the REST API server used in `rmf_testbed`.
+This repository contains an API server implementation using Swagger UI and aimed at providing REST API calls that can interact with a simulated TurtleBot3 in `nav_rest_api_turtlebot3`.
 
 ## **Build** :hammer:
 
