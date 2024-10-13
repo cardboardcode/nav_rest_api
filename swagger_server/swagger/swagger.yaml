@@ -1,0 +1,178 @@
+openapi: 3.0.3
+info:
+  title: Nav Rest API (Swagger UI)
+  description: "A swagger UI variant of nav_rest_api to allow controlling of TurtleBot3 via API calls."
+  termsOfService: http://cardboardcode.github.io/
+  contact:
+    email: beyhy94@gmail.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.11
+externalDocs:
+  description: Find out more about Swagger
+  url: http://swagger.io
+servers:
+- url: https://petstore3.swagger.io/api/v3
+tags:
+- name: user
+  description: Operations about user
+paths:
+  /test_publish:
+    post:
+      tags:
+      - user
+      summary: Publish simple string for 1 minute
+      description: This can only be done by the logged in user.
+      operationId: publish_ros1_string
+      requestBody:
+        description: Created temporary ROS 1 string publisher
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ROS1String'
+      responses:
+        default:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ROS1String'
+      x-openapi-router-controller: swagger_server.controllers.user_controller
+  /robot/goal:
+    post:
+      tags:
+      - user
+      summary: Send navigation goal to Robot
+      description: Robot will move to input navigational goal.
+      operationId: send_nav_goal
+      requestBody:
+        description: Send navigational goal
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Position'
+      responses:
+        default:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
+      x-openapi-router-controller: swagger_server.controllers.user_controller
+  /robot/twist:
+    post:
+      summary: Control the linear and/or angular speed of Robot.
+      description: Robot can be directed to move forward/backward or rotate closewise/anti-clockwise.
+      operationId: move_robot
+      requestBody:
+        description: Send twist to robot
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Twist'
+      responses:
+        default:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Twist'
+      x-openapi-router-controller: swagger_server.controllers.user_controller
+  /robot/status:
+    get:
+      tags:
+      - user
+      summary: Get position and orientation of robot
+      description: ""
+      operationId: get_robot_position
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
+        "400":
+          description: Connection is successful but something went wrong.
+        "404":
+          description: Robot not found
+      x-openapi-router-controller: swagger_server.controllers.user_controller
+  /robot/dock:
+    get:
+      tags:
+      - user
+      summary: Command robot to return to Dock (home)
+      description: ""
+      operationId: dock_robot
+      responses:
+        "200":
+          description: Successful operation
+        "400":
+          description: Connection is successful but something went wrong.
+        "404":
+          description: Robot not found
+      x-openapi-router-controller: swagger_server.controllers.user_controller
+
+components:
+  schemas:
+    Position:
+      type: object
+      properties:
+        location_x:
+          type: number
+          example: 3.80250850120499
+        location_y:
+          type: number
+          example: 1.0450816557708476
+        location_th:
+          type: number
+          example: 1.5707
+      xml:
+        name: position
+    Twist:
+      type: object
+      properties:
+        linear_speed:
+          type: number
+          example: 0.0
+        angular_speed:
+          type: number
+          example: 0.0
+      xml:
+        name: twist
+    ROS1String:
+      type: object
+      properties:
+        msg:
+          type: string
+          example: "test_message"
+      xml:
+        name: ros_string
+  requestBodies:
+    Position:
+      description: Position object to be used for robot position
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Position'
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/Position'
+  securitySchemes:
+    petstore_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://petstore3.swagger.io/oauth/authorize
+          scopes:
+            write:pets: modify pets in your account
+            read:pets: read your pets
+      x-tokenInfoFunc: swagger_server.controllers.authorization_controller.check_petstore_auth
+      x-scopeValidateFunc: swagger_server.controllers.authorization_controller.validate_scope_petstore_auth
+    api_key:
+      type: apiKey
+      name: api_key
+      in: header
+      x-apikeyInfoFunc: swagger_server.controllers.authorization_controller.check_api_key
+
