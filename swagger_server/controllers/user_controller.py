@@ -44,6 +44,41 @@ def euler_from_quaternion(x, y, z, w):
      
         return roll_x, pitch_y, yaw_z # in radians
 
+def get_robot_status():  # noqa: E501
+    command = ['rostopic', 'echo', '/move_base/status', '-n', '1']
+    
+    # Run the command and capture the output
+    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    
+    if result.returncode != 0:
+        rospy.logerr(f"Error running command: {result.stderr}")
+        return None
+
+    output = parse_rostopic_output(result.stdout)
+
+    # Navigation Status referenced from actionlib_msgs/GoalStatus
+    # Link: https://docs.ros.org/en/noetic/api/actionlib_msgs/html/msg/GoalStatus.html
+
+
+    print(f"output = {output}")
+
+    navigation_status = 10 # IDLE
+    navigation_message = ""
+
+    if len(output["status_list"]) != 0:
+        navigation_status = output["status_list"][0]["status"]
+        navigation_message = output["status_list"][0]["text"]
+    else:
+        navigation_message = "Idling"
+
+    robot_status = {
+        'map_name': 'L1',
+        'navigation_status': navigation_status,
+        'msg': navigation_message
+    }
+
+    return robot_status
+
 def get_robot_position():  # noqa: E501
     command = ['rostopic', 'echo', '/amcl_pose', '-n', '1']
     

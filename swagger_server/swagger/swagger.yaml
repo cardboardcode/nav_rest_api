@@ -83,6 +83,25 @@ paths:
     get:
       tags:
       - user
+      summary: Get status information of robot
+      description: ""
+      operationId: get_robot_status
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+        "400":
+          description: Connection is successful but something went wrong.
+        "404":
+          description: Robot not found
+      x-openapi-router-controller: swagger_server.controllers.user_controller
+  /robot/pose:
+    get:
+      tags:
+      - user
       summary: Get position and orientation of robot
       description: ""
       operationId: get_robot_position
@@ -137,6 +156,20 @@ paths:
 
 components:
   schemas:
+    Status:
+      type: object
+      properties:
+        map_name:
+          type: string
+          example: "test_map_name"
+        navigation_status:
+          type: number
+          example: 1
+        msg:
+          type: string
+          example: "Goal has reached."
+      xml:
+        name: position
     Position:
       type: object
       properties:
@@ -180,6 +213,15 @@ components:
         application/xml:
           schema:
             $ref: '#/components/schemas/Position'
+    Status:
+      description: Status object to be used for robot status
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Status'
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/Status'
   securitySchemes:
     petstore_auth:
       type: oauth2
