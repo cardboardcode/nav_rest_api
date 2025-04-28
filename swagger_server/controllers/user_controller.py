@@ -322,3 +322,65 @@ def send_nav_goal(body=None):  # noqa: E501
         print(f"Failed to publish message: {e.stderr}")
 
     return 'Navigation Request Sent.'
+
+def localise_robot(body=None):  # noqa: E501
+
+    input_location_x = body['location_x']
+    input_location_y = body['location_y']
+    input_location_th = body['location_th']
+
+    # Define the rostopic publish command
+    topic = '/initialpose'
+    message_type = 'geometry_msgs/PoseWithCovarianceStamped'
+    # message = body['msg']  # The message must be enclosed in quotes
+
+    qx, qy, qz, qw = euler_to_quaternion(0.0, 0.0, input_location_th)
+
+    covariance = [
+        0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.25, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.06853892326654787]
+
+    message = { 
+          "header": {
+            "seq": 0,
+            "stamp": {
+              "secs": 0,
+              "nsecs": 0
+            },
+            "frame_id": "map"
+          },
+          "pose": {
+            "pose": {
+              "position": {
+                "x": input_location_x,
+                "y": input_location_y,
+                "z": 0.0
+              },
+              "orientation": {
+                "x": qx,
+                "y": qy,
+                "z": qz,
+                "w": qw
+              }
+            },
+            "covariance": covariance
+          }
+        }
+
+    # Construct the rostopic command
+    cmd = ['rostopic', 'pub', '-1', topic, message_type, str(message)]
+
+    try:
+        # Use subprocess to run the command
+        result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        
+        # Print the output of the command
+        print(f"Message published:\n{result.stdout}")
+        
+    except subprocess.CalledProcessError as e:
+        # Handle errors if the subprocess fails
+        print(f"Failed to publish message: {e.stderr}")
+
+    return 'Navigation Request Sent.'
