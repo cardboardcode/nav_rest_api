@@ -102,7 +102,7 @@ paths:
     get:
       tags:
       - user
-      summary: Command robot to return to Dock (home)
+      summary: Command Robot to return to Dock (home)
       description: ""
       operationId: dock_robot
       responses:
@@ -112,6 +112,27 @@ paths:
           description: Connection is successful but something went wrong.
         "404":
           description: Robot not found
+      x-openapi-router-controller: swagger_server.controllers.user_controller
+  /robot/localise:
+    post:
+      tags:
+      - user
+      summary: Localise Robot
+      description: Robot will localise to input initial pose.
+      operationId: localise_robot
+      requestBody:
+        description: Send new initial pose
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Position'
+      responses:
+        default:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
       x-openapi-router-controller: swagger_server.controllers.user_controller
 
 components:
