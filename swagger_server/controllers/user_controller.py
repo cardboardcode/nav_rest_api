@@ -73,6 +73,7 @@ def get_robot_status():  # noqa: E501
 
     robot_status = {
         'map_name': 'L1',
+        'battery': 0.9,
         'navigation_status': navigation_status,
         'msg': navigation_message
     }

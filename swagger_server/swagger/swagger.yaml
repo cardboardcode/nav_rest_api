@@ -162,6 +162,9 @@ components:
         map_name:
           type: string
           example: "test_map_name"
+        battery:
+          type: number
+          example: 0.9
         navigation_status:
           type: number
           example: 1
