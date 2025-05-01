@@ -16,7 +16,7 @@ servers:
 - url: https://petstore3.swagger.io/api/v3
 tags:
 - name: user
-  description: Operations about user
+  description: Operations about Robot
 paths:
   /test_publish:
     post:
@@ -69,24 +69,29 @@ paths:
               schema:
                 $ref: '#/components/schemas/Position'
       x-openapi-router-controller: swagger_server.controllers.user_controller
-  /robot/twist:
-    post:
-      summary: Control the linear and/or angular speed of Robot.
-      description: Robot can be directed to move forward/backward or rotate closewise/anti-clockwise.
-      operationId: move_robot
-      requestBody:
-        description: Send twist to robot
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Twist'
+  /robot/{robot_id}/stop:
+    get:
+      tags:
+        - user
+      summary: Cancel current navigation task of Robot.
+      parameters:
+      - name: robot_id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+        example: tb3_0
+      description: Robot's current navigation task can be cancelled.
+      operationId: stop_robot
       responses:
-        default:
+        "200":
           description: Successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Twist'
+        "400":
+          description: Connection is successful but something went wrong.
+        "404":
+          description: Robot not found
       x-openapi-router-controller: swagger_server.controllers.user_controller
   /robot/{robot_id}/status:
     get:

@@ -217,23 +217,12 @@ def dock_robot(robot_id):  # noqa: E501
 
     return 'Navigation Request Sent.'
 
-def move_robot(body=None):  # noqa: E501
+def stop_robot(robot_id, body=None):  # noqa: E501
     # Define the rostopic publish command
-    topic = '/cmd_vel'
-    message_type = 'geometry_msgs/Twist'
+    topic = f'/{robot_id}/move_base/cancel'
+    message_type = 'actionlib_msgs/GoalID'
 
-    message = {
-            "linear":{
-                "x": body["linear_speed"],
-                "y": 0,
-                "z": 0
-            },
-            "angular":{
-                "x": 0,
-                "y": 0,
-                "z": body["angular_speed"]
-            }
-        }
+    message = "{}"
     # Construct the rostopic command
     cmd = ['rostopic', 'pub', '-1', topic, message_type, str(message)]
 
@@ -248,7 +237,7 @@ def move_robot(body=None):  # noqa: E501
         # Handle errors if the subprocess fails
         print(f"Failed to publish message: {e.stderr}")
 
-    return 'Publishing twist to Robot...'
+    return f'Cancelling navigation task of [{robot_id}]...'
 
 def publish_ros1_string(body=None):  # noqa: E501
     # Define the rostopic publish command
