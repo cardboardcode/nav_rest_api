@@ -44,8 +44,10 @@ def euler_from_quaternion(x, y, z, w):
      
         return roll_x, pitch_y, yaw_z # in radians
 
-def get_robot_status():  # noqa: E501
-    command = ['rostopic', 'echo', '/move_base/status', '-n', '1']
+def get_robot_status(robot_id):  # noqa: E501
+
+    print(f"robot_name = {robot_id}")
+    command = ['rostopic', 'echo', f'/{robot_id}/move_base/status', '-n', '1']
     
     # Run the command and capture the output
     result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -80,8 +82,8 @@ def get_robot_status():  # noqa: E501
 
     return robot_status
 
-def get_robot_position():  # noqa: E501
-    command = ['rostopic', 'echo', '/amcl_pose', '-n', '1']
+def get_robot_position(robot_id):  # noqa: E501
+    command = ['rostopic', 'echo', f'/{robot_id}/amcl_pose', '-n', '1']
     
     # Run the command and capture the output
     result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -107,7 +109,7 @@ def get_robot_position():  # noqa: E501
 
     return robot_position
 
-def dock_robot():  # noqa: E501
+def dock_robot(robot_id):  # noqa: E501
     
     # TODO(cardboardcode): Check if robot is already docked
     # If not, execute below.
@@ -287,16 +289,18 @@ def euler_to_quaternion(th_x, th_y, th_z):
 
     return qx, qy, qz, qw
 
-def send_nav_goal(body=None):  # noqa: E501
+def send_nav_goal(robot_id, body=None):  # noqa: E501
 
+    input_robot_name = robot_id
     input_location_x = body['location_x']
     input_location_y = body['location_y']
     input_location_th = body['location_th']
 
     # Define the rostopic publish command
-    topic = '/move_base/goal'
+    # /tb3_1/move_base_simple/goal
+    topic = f'/{input_robot_name}/move_base/goal'
+    print(f"Publishing on topic {topic}")
     message_type = 'move_base_msgs/MoveBaseActionGoal'
-    # message = body['msg']  # The message must be enclosed in quotes
 
     qx, qy, qz, qw = euler_to_quaternion(0.0, 0.0, input_location_th)
 
@@ -359,14 +363,14 @@ def send_nav_goal(body=None):  # noqa: E501
 
     return 'Navigation Request Sent.'
 
-def localise_robot(body=None):  # noqa: E501
+def localise_robot(robot_id,body=None):  # noqa: E501
 
     input_location_x = body['location_x']
     input_location_y = body['location_y']
     input_location_th = body['location_th']
 
     # Define the rostopic publish command
-    topic = '/initialpose'
+    topic = f'/{robot_id}/initialpose'
     message_type = 'geometry_msgs/PoseWithCovarianceStamped'
     # message = body['msg']  # The message must be enclosed in quotes
 
