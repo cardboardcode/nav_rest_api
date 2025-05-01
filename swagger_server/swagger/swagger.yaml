@@ -18,6 +18,21 @@ tags:
 - name: user
   description: Operations about Robot
 paths:
+  /system/ping:
+    get:
+      tags:
+      - user
+      summary: Allow external clients to ping and verify if system is online.
+      description: Allow verification by external client to verify if system is online.
+      operationId: ping_system
+      responses:
+        "200":
+          description: Successful operation
+        "400":
+          description: Connection is successful but something went wrong.
+        "404":
+          description: System is offline.
+      x-openapi-router-controller: swagger_server.controllers.user_controller
   /test_publish:
     post:
       tags:

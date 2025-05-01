@@ -239,6 +239,9 @@ def stop_robot(robot_id, body=None):  # noqa: E501
 
     return f'Cancelling navigation task of [{robot_id}]...'
 
+def ping_system():  # noqa: E501
+    return 'system online'
+
 def publish_ros1_string(body=None):  # noqa: E501
     # Define the rostopic publish command
     topic = '/talker'
