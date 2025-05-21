@@ -46,7 +46,6 @@ def euler_from_quaternion(x, y, z, w):
 
 def get_robot_status(robot_id):  # noqa: E501
 
-    print(f"robot_name = {robot_id}")
     command = ['rostopic', 'echo', f'/{robot_id}/move_base/status', '-n', '1']
     
     # Run the command and capture the output
@@ -115,12 +114,21 @@ def dock_robot(robot_id):  # noqa: E501
     # If not, execute below.
     # Otherwise, return "Robot already docked."
 
-    input_location_x = 0.49379590649562627
-    input_location_y = -0.012615691842014616
-    input_location_th = 3.028522675911123
+    if robot_id == "tb3_0":
+        input_location_x = -3.995364293097464
+        input_location_y = 8.01519874566102
+        input_location_th = -0.005692177206749547
+    elif robot_id == "tb3_1":
+        input_location_x = 4.028384051144058
+        input_location_y = 8.016791981786778
+        input_location_th =  0.004432755549700517
+    elif robot_id == "robot0":
+        input_location_x = 0.49379590649562627
+        input_location_y = -0.012615691842014616
+        input_location_th = 3.028522675911123
 
     # Define the rostopic publish command
-    topic = '/move_base/goal'
+    topic = f'/{robot_id}/move_base/goal'
     message_type = 'move_base_msgs/MoveBaseActionGoal'
     # message = body['msg']  # The message must be enclosed in quotes
 
@@ -183,39 +191,14 @@ def dock_robot(robot_id):  # noqa: E501
         # Handle errors if the subprocess fails
         print(f"Failed to publish message: {e.stderr}")
 
-    # TODO(cardboardcode): Check that robot has indeed reached home waypoint before publishing dock action.
-    is_robot_home = False
-    while not is_robot_home:
-        print("[INFO] - Robot navigating to [home]...")
-        time.sleep(1)
-        # Check robot position
-        buffer = 0.4
-        robot_pos = get_robot_position()
-        x_delta = abs(robot_pos['location_x'] - 0.49379590649562627)
-        y_delta = abs(robot_pos['location_y'] - -0.012615691842014616)
-        th_delta = abs(abs(robot_pos['location_th']) - 3.028522675911123)
+    # If not near destination already, check for navigation to start.
+    curr_status = get_robot_status(robot_id)
 
-        print(f"[{x_delta}, {y_delta}, {th_delta}]")
-        if ( x_delta < buffer and y_delta < buffer and th_delta < buffer):
-            is_robot_home = True
+    while curr_status["navigation_status"] != 1:
+        print(f"navigation_status = {curr_status['navigation_status']}")
+        curr_status = get_robot_status(robot_id)
 
-    print(f"[INFO] - Navigation completed. Robot is [home]...")
-    print(f"[INFO] - Issuing autodocking")
-
-    dock_cmd = ['rostopic', 'pub', '/autodock_action/goal', 'autodock_core/AutoDockingActionGoal', '{}', '--once']
-
-    try:
-        # Use subprocess to run the command
-        result = subprocess.run(dock_cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        
-        # Print the output of the command
-        print(f"Message published:\n{result.stdout}")
-        
-    except subprocess.CalledProcessError as e:
-        # Handle errors if the subprocess fails
-        print(f"Failed to publish message: {e.stderr}")
-
-    return 'Navigation Request Sent.'
+    return 'Docking Started...'
 
 def stop_robot(robot_id, body=None):  # noqa: E501
     # Define the rostopic publish command
@@ -283,10 +266,32 @@ def euler_to_quaternion(th_x, th_y, th_z):
 
 def send_nav_goal(robot_id, body=None):  # noqa: E501
 
+    # Check if a navigation task is currently being processed.
+    # If true, reject.
+    # If not near destination already, check for navigation to start.
+    curr_status = get_robot_status(robot_id)
+
+    # if curr_status["navigation_status"] == 1 or curr_status["navigation_status"] == 2:
+    #   error_response = "Still processing previous. Rejecting navigation request."
+    #   return error_response, 400
+
+    # Check if robot is already near waypoint.
+    robot_position = get_robot_position(robot_id)
     input_robot_name = robot_id
     input_location_x = body['location_x']
     input_location_y = body['location_y']
     input_location_th = body['location_th']
+
+    is_already_at_destination = is_within_threshold(
+        robot_position["location_x"],
+        robot_position["location_y"],
+        input_location_x,
+        input_location_y,
+        threshold=0.5
+        )
+    
+    if is_already_at_destination:
+        return 'Already at destination.'
 
     # Define the rostopic publish command
     # /tb3_1/move_base_simple/goal
@@ -353,7 +358,14 @@ def send_nav_goal(robot_id, body=None):  # noqa: E501
         # Handle errors if the subprocess fails
         print(f"Failed to publish message: {e.stderr}")
 
-    return 'Navigation Request Sent.'
+    # If not near destination already, check for navigation to start.
+    curr_status = get_robot_status(robot_id)
+
+    while curr_status["navigation_status"] != 1:
+        print(f"navigation_status = {curr_status['navigation_status']}")
+        curr_status = get_robot_status(robot_id)
+
+    return 'Navigation Started...'
 
 def localise_robot(robot_id,body=None):  # noqa: E501
 
@@ -416,3 +428,22 @@ def localise_robot(robot_id,body=None):  # noqa: E501
         print(f"Failed to publish message: {e.stderr}")
 
     return 'Navigation Request Sent.'
+
+def is_within_threshold(x1: float, y1: float, x2: float, y2: float, threshold: float) -> bool:
+    """
+    Calculates the Euclidean distance between two (x, y) coordinates and
+    returns True if the distance is within the specified threshold, False otherwise.
+
+    Args:
+        x1: The x-coordinate of the first point.
+        y1: The y-coordinate of the first point.
+        x2: The x-coordinate of the second point.
+        y2: The y-coordinate of the second point.
+        threshold: The maximum distance allowed for the points to be considered within.
+
+    Returns:
+        True if the distance between the points is less than or equal to the threshold,
+        False otherwise.
+    """
+    distance = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+    return distance <= threshold
