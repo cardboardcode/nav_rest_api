@@ -59,11 +59,16 @@ def get_robot_status():  # noqa: E501
     # Navigation Status referenced from actionlib_msgs/GoalStatus
     # Link: https://docs.ros.org/en/noetic/api/actionlib_msgs/html/msg/GoalStatus.html
 
-
-    print(f"output = {output}")
+    command = ['rostopic', 'echo', '/map_server', '-n', '1']
+    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    if result.returncode != 0:
+        rospy.logerr(f"Error running command: {result.stderr}")
+        return None
+    output_2 = parse_rostopic_output(result.stdout)
 
     navigation_status = 10 # IDLE
     navigation_message = ""
+    map_name = output_2["data"]
 
     if len(output["status_list"]) != 0:
         navigation_status = output["status_list"][0]["status"]
@@ -72,7 +77,7 @@ def get_robot_status():  # noqa: E501
         navigation_message = "Idling"
 
     robot_status = {
-        'map_name': 'L1',
+        'map_name': map_name,
         'battery': 0.9,
         'navigation_status': navigation_status,
         'msg': navigation_message
