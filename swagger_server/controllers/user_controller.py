@@ -275,6 +275,28 @@ def publish_ros1_string(body=None):  # noqa: E501
 
     return 'Publishing ROS 1 string...'
 
+def change_map(body=None):  # noqa: E501
+    # Define the rostopic publish command
+    topic = '/change_map'
+    message_type = 'std_msgs/String'
+    message = body['map_name']  # The message must be enclosed in quotes
+
+    # Construct the rostopic command
+    cmd = ['rostopic', 'pub', '-1', topic, message_type, message]
+
+    try:
+        # Use subprocess to run the command
+        result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        
+        # Print the output of the command
+        print(f"Message published:\n{result.stdout}")
+        
+    except subprocess.CalledProcessError as e:
+        # Handle errors if the subprocess fails
+        print(f"Failed to publish message: {e.stderr}")
+
+    return f'Request sent to change robot map to [ {message} ]...'
+
 def euler_to_quaternion(th_x, th_y, th_z):
     # Calculate cos and sin for each Euler angle
     cy = math.cos(th_z * 0.5)
