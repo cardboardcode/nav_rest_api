@@ -6,6 +6,7 @@ import yaml
 import threading
 import subprocess
 from geometry_msgs.msg import PoseWithCovarianceStamped
+from kabam_msgs.srv import ParamTrigger
 
 from swagger_server.models.user import User  # noqa: E501
 from swagger_server import util
@@ -277,25 +278,23 @@ def publish_ros1_string(body=None):  # noqa: E501
 
 def change_map(body=None):  # noqa: E501
     # Define the rostopic publish command
-    topic = '/change_map'
-    message_type = 'std_msgs/String'
+    service_name = '/change_map'
     message = body['map_name']  # The message must be enclosed in quotes
 
-    # Construct the rostopic command
-    cmd = ['rostopic', 'pub', '-1', topic, message_type, message]
+    service_proxy = rospy.ServiceProxy(service_name, ParamTrigger)
 
-    try:
-        # Use subprocess to run the command
-        result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        
-        # Print the output of the command
-        print(f"Message published:\n{result.stdout}")
-        
-    except subprocess.CalledProcessError as e:
-        # Handle errors if the subprocess fails
-        print(f"Failed to publish message: {e.stderr}")
+    rospy.loginfo(f"Waiting for service '{service_name}' to be available...")
+    rospy.wait_for_service(service_name)
+    rospy.loginfo(f"Service '{service_name}' is now available.")
 
-    return f'Request sent to change robot map to [ {message} ]...'
+    rospy.loginfo(f"Calling service '{service_name}'...")
+    parameter_list = [message]
+
+    response = service_proxy(parameter_list)
+
+    return_msg = f"{response.success} - {response.message}"
+
+    return return_msg
 
 def euler_to_quaternion(th_x, th_y, th_z):
     # Calculate cos and sin for each Euler angle

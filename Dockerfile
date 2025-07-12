@@ -21,11 +21,12 @@ COPY ./scripts/run_server.bash ./run_server.bash
 
 WORKDIR /catkin_ws/src/
 RUN git clone -b devel https://github.com/cardboardcode/autodock.git --depth 1 --single-branch
-RUN rm -r autodock/autodock_examples
-RUN rm -r autodock/autodock_sim
-RUN rm -r autodock/docs
-RUN rm -r autodock/.github
-RUN rm -r autodock/scripts
+RUN git clone -b v0.0.2 https://github.com/KABAM-Robotics/kabam_msgs.git --depth 1 --single-branch
+RUN rm -r autodock/autodock_examples && \
+  rm -r autodock/autodock_sim && \
+  rm -r autodock/docs && \
+  rm -r autodock/.github && \
+  rm -r autodock/scripts
 
 WORKDIR /catkin_ws/src/nav_rest_api
 RUN pip3 install --no-cache-dir -r requirements.txt
